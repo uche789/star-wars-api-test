@@ -4,7 +4,7 @@ import People from "@/components/People.vue";
 import { State, storeConfig } from "@/store";
 import { swapiApi } from "@/services/api";
 import { dummyPeople, dummyPlanet } from "@/dummyData";
-// import Modal from "@/components/People.vue";
+import flushPromises from "flush-promises";
 
 const localVue = createLocalVue();
 localVue.use(Vuex);
@@ -20,13 +20,22 @@ describe("People.vue", () => {
     store = new Vuex.Store(storeConfig);
   });
 
-  it("renders props.msg when passed", () => {
-    const msg = "new message";
+  it("is vue instance", () => {
     const wrapper = shallowMount(People, {
-      propsData: { msg },
       localVue,
       store
     });
-    expect(wrapper.text()).toMatch(msg);
+    expect(wrapper.vm).toBeTruthy();
+    expect(wrapper.find(".people").exists()).toBe(true);
+  });
+
+  it("displays results", async () => {
+    const wrapper = shallowMount(People, {
+      localVue,
+      store
+    });
+
+    await flushPromises();
+    expect(wrapper.find(".people__list").exists()).toBe(true);
   });
 });

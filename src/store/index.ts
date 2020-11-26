@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Vuex, { ActionTree, MutationTree } from "vuex";
-import { swapiApi, Planet, People } from "@/services/api";
+import { swapiApi, Planet, People, Person } from "@/services/api";
 
 Vue.use(Vuex);
 
@@ -14,10 +14,19 @@ const state = (): State => ({
   planet: null
 });
 
+export function formatResult(result: Person) {
+  result.created = new Date(result.created);
+  result.edited = new Date(result.edited);
+  result.height = Number(result.height);
+  result.mass = Number(result.mass);
+  return result;
+}
+
 export const storeConfig = {
   state,
   mutations: {
     setPeople(state: State, payLoad: People) {
+      payLoad.results.map((result: Person) => formatResult(result));
       state.people = payLoad;
     },
     setPlanet(state: State, payLoad: Planet) {
@@ -27,6 +36,10 @@ export const storeConfig = {
   actions: {
     async fetchPeople({ commit }, link: string) {
       const data = await swapiApi.fetchPeople(link);
+      commit("setPeople", data);
+    },
+    async search({ commit }, query: string) {
+      const data = await swapiApi.search(query);
       commit("setPeople", data);
     },
     async fetchPlanet({ commit }, link: string) {

@@ -1,7 +1,7 @@
 <template>
-  <article class="message" :class="messageClass">
+  <article class="message is-danger">
     <div class="message-header">
-      <p>{{ title }}</p>
+      <p>Error</p>
       <button
         class="delete"
         @click="$emit('close')"
@@ -15,50 +15,9 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from "vue";
+import Vue from "vue";
 
-export enum MessageType {
-  Error = "error",
-  Success = "success",
-  Warning = "warning",
-  Info = "info"
-}
-
-const settings: Record<MessageType, { title: string; class: string }> = {
-  [MessageType.Info]: {
-    class: "is-info",
-    title: "Info"
-  },
-  [MessageType.Error]: {
-    class: "is-danger",
-    title: "Error"
-  },
-  [MessageType.Warning]: {
-    class: "is-warning",
-    title: "Warning"
-  },
-  [MessageType.Success]: {
-    class: "is-success",
-    title: "Success"
-  }
-};
-
-export default Vue.extend({
-  props: {
-    messageType: {
-      type: String as PropType<MessageType>,
-      default: MessageType.Info
-    }
-  },
-  computed: {
-    messageClass(): string {
-      return settings[this.messageType].class;
-    },
-    title(): string {
-      return settings[this.messageType].title;
-    }
-  }
-});
+export default Vue.extend({});
 </script>
 
 <style lang="scss" scoped>

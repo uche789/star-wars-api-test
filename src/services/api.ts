@@ -10,8 +10,8 @@ export interface People {
 
 export interface Person {
   name: string;
-  height: string;
-  mass: string;
+  height: string | number;
+  mass: string | number;
   hair_color: string;
   skin_color: string;
   eye_color: string;
@@ -22,8 +22,8 @@ export interface Person {
   species: string[];
   vehicles: string[];
   starships: string[];
-  created: string;
-  edited: string;
+  created: string | Date;
+  edited: string | Date;
   url: string;
 }
 
@@ -44,37 +44,17 @@ export interface Planet {
   url: string;
 }
 
-// export const swapiApi = {
-//   async fetchPeople(link?: string): Promise<People> {
-//     const response = await fetch(link || "https://swapi.dev/api/people");
-//     return (await response.json()) as People;
-//   },
-//   async fetchPlanet(planet: string): Promise<Planet> {
-//     const response = await fetch(planet);
-//     return (await response.json()) as Planet;
-//   }
-// };
-
 export const swapiApi = {
-  async fetchPeople(link: string): Promise<People> {
-    if (link === 'http://swapi.dev/api/people/?page=2') {
-      dummyPeople.next = 'http://swapi.dev/api/people/?page=3'
-      dummyPeople.previous = 'http://swapi.dev/api/people'
-    }
-
-    if (link === 'http://swapi.dev/api/people/?page=3') {
-      dummyPeople.next = null
-      dummyPeople.previous = 'http://swapi.dev/api/people/?page=2'
-    }
-    return new Promise((resolve, reject) => {
-      // reject(new Error('mistake'))
-      resolve(dummyPeople);
-    });
+  async fetchPeople(link?: string): Promise<People> {
+    const response = await fetch(link || "https://swapi.dev/api/people");
+    return (await response.json()) as People;
   },
-  async fetchPlanet(_planet: string): Promise<Planet> {
-    return new Promise((resolve, reject) => {
-      reject(new Error('mistake'))
-      // resolve(dummyPlanet);
-    });
+  async fetchPlanet(planet: string): Promise<Planet> {
+    const response = await fetch(planet);
+    return (await response.json()) as Planet;
+  },
+  async search(query: string): Promise<People> {
+    const response = await fetch(`https://swapi.dev/api/people/?search=${query}`);
+    return (await response.json()) as People;
   }
 };

@@ -45,7 +45,7 @@ export default Vue.extend({
 }
 
 @media screen and (max-width: 768px) {
-  .pagination {
+  .additional {
     flex: 0 0 100%;
   }
 }

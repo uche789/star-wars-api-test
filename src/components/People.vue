@@ -1,8 +1,9 @@
 <template>
   <div class="people">
-    <Message v-if="error" message-type="error" @close="error = ''"
+    <Message v-if="error" @close="error = ''"
       ><template #body>{{ error }}</template></Message
     >
+
     <Pagination
       :count="pages"
       :previous="people.previous"
@@ -12,16 +13,23 @@
     >
       Pages {{ count }} of {{ pages }}
     </Pagination>
-    <div class="people__list">
-      <table class="table" v-if="results.length > 0">
+
+    <Search @search="search" />
+
+    <div class="people__list" v-if="results.length > 0">
+      <button class="button" @click="fetchAll">Fetch all</button>
+      <table class="table">
         <thead>
           <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Height</th>
-            <th scope="col">Mass</th>
-            <th scope="col">Created</th>
-            <th scope="col">Edited</th>
-            <th scope="col">Planet</th>
+            <th
+              scope="col"
+              v-for="heading in headings"
+              :key="heading"
+              class="people__list-heading"
+              @click="sort(heading)"
+            >
+              {{ heading }}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -29,8 +37,8 @@
             <td>{{ result.name }}</td>
             <td>{{ result.height }}</td>
             <td>{{ result.mass }}</td>
-            <td>{{ result.created }}</td>
-            <td>{{ result.edited }}</td>
+            <td>{{ getDateString(result.created) }}</td>
+            <td>{{ getDateString(result.edited) }}</td>
             <td>
               <a @click="getPlanet(result.homeworld, result.name)">Link</a>
             </td>
@@ -52,22 +60,35 @@ import Vue from "vue";
 import Modal from "@/components/Modal.vue";
 import { People, Person, Planet } from "@/services/api";
 import { State } from "@/store";
-import { cloneDeep } from "lodash";
+import { cloneDeep, sortBy } from "lodash";
 import PlanetInfo from "@/components/PlanetInfo.vue";
 import Pagination from "@/components/Pagination.vue";
 import Message from "@/components/Message.vue";
+import Search from "@/components/Search.vue";
+
+const headings = {
+  name: "Name",
+  height: "Height",
+  mass: "Mass",
+  created: "Created",
+  edited: "Edited",
+  homeworld: "Planet"
+};
 
 export default Vue.extend({
   components: {
     Modal,
     PlanetInfo,
     Pagination,
-    Message
+    Message,
+    Search
   },
   data: () => ({
     show: false,
+    results: [] as Person[],
     error: "" as string,
-    count: 1
+    count: 1,
+    headings: Object.values(headings)
   }),
   computed: {
     planet(): Planet | null {
@@ -76,30 +97,48 @@ export default Vue.extend({
     people(): People | null {
       return cloneDeep((this.$store.state as State).people);
     },
-    results(): Person[] {
-      return this.people
-        ? this.people.results.map((result: Person) => {
-            result.created = new Date(result.created).toLocaleDateString();
-            result.edited = new Date(result.edited).toLocaleDateString();
-            return result;
-          })
-        : [];
-    },
     pages(): number {
-      return Math.ceil(
-        this.people ? this.people.count / this.results.length : 0
-      );
+      return Math.ceil(this.people ? this.people.count / 10 : 0);
+    }
+  },
+  watch: {
+    people(value: People) {
+      if (!value) return;
+
+      this.results = value.results;
     }
   },
   async created(): Promise<void> {
     await this.fetch();
   },
   methods: {
+    getDateString(date: Date) {
+      return date.toLocaleDateString();
+    },
+    sort(heading: string) {
+      if (heading === headings.homeworld) {
+        return;
+      }
+
+      this.results = sortBy(this.results, [heading.toLowerCase()]).reverse();
+    },
+    async fetchAll() {
+      await this.fetch();
+    },
     async selectedPage(value: string) {
-      this.count = parseInt(
+      const count = parseInt(
         value.replace("http://swapi.dev/api/people/?page=", "")
       );
+      this.count = Number.isNaN(count) ? 1 : count;
       await this.fetch(value);
+    },
+    async search(query?: string): Promise<void> {
+      this.count = 1;
+      try {
+        await this.$store.dispatch("search", query);
+      } catch {
+        this.error = `Something must have happend! We couldn't fetch the list of Star Wars aliens!!`;
+      }
     },
     async fetch(value?: string): Promise<void> {
       try {
